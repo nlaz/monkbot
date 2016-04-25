@@ -17,6 +17,9 @@ var WebClient = require('@slack/client').WebClient;
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
 
 var token = process.env.SLACK_API_TOKEN || '';
+var usage = "*CarpeBot* - Your courteous Slack reminder to commit daily\n" +
+            "`@carpebot help` - Displays list of commands carpebot recognizes.\n" +
+            "`@carpebot add me` - Add your name to carpebot's list of committers.";
 
 var rtm = new RtmClient(token, {logLevel: DEBUG_LEVEL});
 var web = new WebClient(token);
@@ -34,12 +37,13 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
     switch (command) {
       case 'help':
         console.log("'help' command recognized");
+        rtm.sendMessage(usage, data['channel']);
         break;
       case 'add me':
         console.log("'add me' command recognized");
         break;
       default:
-        rtm.sendMessage('Oops! Unable to recognize command. Please try again.', data['channel']);
+        rtm.sendMessage('Oops! Unable to recognize command. Please try something like:\n' + usage, data['channel']);
     }
 
     // fetchDM(data['user'], rtm);
