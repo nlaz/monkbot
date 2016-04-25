@@ -7,14 +7,9 @@
     "example": "examples",
     "test": "test"
   },
-  "scripts": {
-    "test": "test"
-  },
-  "keywords": [
-    "slack",
-    "npm",
-    "github"
-  ],
   "author": "@nlaz",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@slack/client": "^2.3.0"
+  }
 }
