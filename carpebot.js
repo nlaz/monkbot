@@ -10,10 +10,12 @@
  */
 
 require('./env.js');
-var RtmClient = require('@slack/client').RtmClient;
+var request    = require("request");
+var sqlite3    = require('sqlite3').verbose();
+var RtmClient  = require('@slack/client').RtmClient;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
-var WebClient = require('@slack/client').WebClient;
-var request = require("request");
+var WebClient  = require('@slack/client').WebClient;
+
 var convos = {};
 
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
