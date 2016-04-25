@@ -13,6 +13,7 @@ require('./env.js');
 var RtmClient = require('@slack/client').RtmClient;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var WebClient = require('@slack/client').WebClient;
+var convos = {};
 
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
 
@@ -27,10 +28,11 @@ var web = new WebClient(token);
 rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   var command = data['text'];
   var client_id = '<@' + rtm.activeUserId + '>';
-  console.log(client_id);
-  console.log(command.substring(0, client_id.length));
+  console.log(data['channel']);
+  console.log(convos);
 
   if (command.substring(0, client_id.length) == client_id) {
+    // Bot has been summoned
     command = command.substring(client_id.length + 1).trim();
     console.log(command);
 
@@ -41,22 +43,29 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         break;
       case 'add me':
         console.log("'add me' command recognized");
+        console.log(data);
+        fetchGitHub(data['user'], rtm, data['channel']);
         break;
       default:
         rtm.sendMessage('Oops! Unable to recognize command. Please try something like:\n' + usage, data['channel']);
     }
-
-    // fetchDM(data['user'], rtm);
+  } else if (data['channel'] in convos) {
+    // Opened conversation
+    console.log('IS YOUR NAME REALLY ' + data['text'] + '?');
   }
+
 });
 
-var fetchDM = function(user, rtm) {
+var fetchGitHub = function(user, rtm, channel) {
   web.im.open(user, function imOpenCb(err, info) {
     if (err) {
       console.log('Error:', err);
     } else {
       console.log('IM Info:', info);
-      rtm.sendMessage('test', info['channel']['id']);
+      var convo = info['channel']['id'];
+      convos[convo] = user;
+      rtm.sendMessage('Hi! What is your GitHub username?', convo);
+      rtm.sendMessage('Cool! I messaged you for your username.', channel);
     }
   });
 }
