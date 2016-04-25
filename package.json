@@ -1,0 +1,20 @@
+{
+  "name": "carpebot",
+  "version": "1.0.0",
+  "description": "A slack bot for daily committers",
+  "main": "index.js",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "slack",
+    "npm",
+    "github"
+  ],
+  "author": "@nlaz",
+  "license": "MIT"
+}
