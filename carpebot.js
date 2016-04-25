@@ -10,23 +10,41 @@
  */
 
 require('./env.js');
-var request    = require("request");
-var sqlite3    = require('sqlite3').verbose();
-var RtmClient  = require('@slack/client').RtmClient;
-var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
-var WebClient  = require('@slack/client').WebClient;
+var request       = require("request");
+var sqlite3       = require('sqlite3').verbose();
+var RtmClient     = require('@slack/client').RtmClient;
+var WebClient     = require('@slack/client').WebClient;
+var RTM_EVENTS    = require('@slack/client').RTM_EVENTS;
+var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 
 var convos = {};
 
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
-
 var token = process.env.SLACK_API_TOKEN || '';
+
 var usage = "*CarpeBot* - Your courteous Slack reminder to commit daily\n" +
             "`@carpebot help` - Displays list of commands carpebot recognizes.\n" +
             "`@carpebot add me` - Add your name to carpebot's list of committers.";
 
 var rtm = new RtmClient(token, {logLevel: DEBUG_LEVEL});
 var web = new WebClient(token);
+var db = new sqlite3.Database('test.db');
+
+/* Event Handlers */
+
+rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
+  console.log('Connection opened');
+  var query = "CREATE TABLE IF NOT EXISTS users(" +
+              "id integer PRIMARY KEY, " +
+              "username TEXT, " +
+              "github_username TEXT);"
+
+  db.run(query); // Create DB Table
+});
+
+rtm.on(CLIENT_EVENTS.RTM.DISCONNECT, function () {
+  db.close(); // Close DB
+});
 
 rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   var command = data['text'];
@@ -59,6 +77,8 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   }
 });
 
+/* Helpers */
+
 var fetchGitHub = function(user, rtm, channel) {
   web.im.open(user, function imOpenCb(err, info) {
     if (err) {
@@ -77,7 +97,7 @@ var addUsername = function(name, rtm, channel) {
   var options = {
     url: "https://api.github.com/users/" + name,
     headers: {
-      'User-Agent': 'CarpeBot'
+      'User-Agent': 'carpebot'
     }
   };
 

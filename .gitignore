@@ -14,3 +14,4 @@ build
 
 node_modules
 env.js
+*.db
