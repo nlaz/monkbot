@@ -13,6 +13,7 @@ require('./env.js');
 var RtmClient = require('@slack/client').RtmClient;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var WebClient = require('@slack/client').WebClient;
+var request = require("request");
 var convos = {};
 
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
@@ -52,8 +53,8 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   } else if (data['channel'] in convos) {
     // Opened conversation
     console.log('IS YOUR NAME REALLY ' + data['text'] + '?');
+    addUsername(data['text'], rtm, data['channel']);
   }
-
 });
 
 var fetchGitHub = function(user, rtm, channel) {
@@ -68,6 +69,27 @@ var fetchGitHub = function(user, rtm, channel) {
       rtm.sendMessage('Cool! I messaged you for your username.', channel);
     }
   });
+}
+
+var addUsername = function(name, rtm, channel) {
+  var options = {
+    url: "https://api.github.com/users/" + name,
+    headers: {
+      'User-Agent': 'CarpeBot'
+    }
+  };
+
+  function callback(error, response, body) {
+    if (!error && response.statusCode == 200) {
+      var info = JSON.parse(body);
+      console.log(info);
+      rtm.sendMessage('Got it! Adding ' + name + '...', channel);
+    } else {
+      rtm.sendMessage('Sorry, I had trouble finding ' + name + '...', channel);
+    }
+  }
+
+  request(options, callback);
 }
 
 rtm.start();
