@@ -26,12 +26,23 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   var client_id = '<@' + rtm.activeUserId + '>';
   console.log(client_id);
   console.log(command.substring(0, client_id.length));
+
   if (command.substring(0, client_id.length) == client_id) {
     command = command.substring(client_id.length + 1).trim();
-    
     console.log(command);
-    console.log('Message:', data);
-    fetchDM(data['user'], rtm);
+
+    switch (command) {
+      case 'help':
+        console.log("'help' command recognized");
+        break;
+      case 'add me':
+        console.log("'add me' command recognized");
+        break;
+      default:
+        rtm.sendMessage('Oops! Unable to recognize command. Please try again.', data['channel']);
+    }
+
+    // fetchDM(data['user'], rtm);
   }
 });
 
