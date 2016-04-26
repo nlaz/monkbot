@@ -26,6 +26,7 @@ var token = process.env.SLACK_API_TOKEN || '';
 var usage = "*CarpeBot* - Your courteous Slack reminder to commit daily\n" +
             "`@carpebot help` - Displays list of commands carpebot recognizes.\n" +
             "`@carpebot users` - Displays list of all users.\n" +
+            "`@carpebot report` - Report daily commiters.\n" +
             "`@carpebot add me` - Add your name to carpebot's list of committers.";
 
 var rtm = new RtmClient(token, {logLevel: DEBUG_LEVEL});
@@ -67,6 +68,8 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         fetchUsers( function(message){
           rtm.sendMessage(message, data['channel']);
         });
+        break;
+      case 'report':
         break;
       default:
         rtm.sendMessage('Oops! Unable to recognize command. Please try something like:\n' + usage, data['channel']);
