@@ -67,9 +67,10 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
     }
   } else if (data['channel'] in convos) {
     // Opened conversation
-    console.log('IS YOUR NAME REALLY ' + data['text'] + '?');
-    if (userExists(name)) {
-      addUsername(data['text'], rtm, data['channel']);
+    name = data['text'];
+    console.log('IS YOUR NAME REALLY ' + name + '?');
+    if (!userExists(name)) {
+      addUsername(name, rtm, data);
     }
   }
 });
@@ -84,19 +85,14 @@ var fetchGitHub = function(user, rtm, channel) {
       console.log('IM Info:', info);
       var convo = info['channel']['id'];
       convos[convo] = user;
-      rtm.sendMessage('Hi! What is your GitHub username?', convo);
       rtm.sendMessage('Cool! I messaged you for your username.', channel);
+      rtm.sendMessage('Hi! What is your GitHub username?', convo);
     }
   });
 }
 
-var userExists = function(name) {
-  var q = "SELECT EXISTS(SELECT * FROM users WHERE github_username='" + name "');"
-  db.run(q);
-}
-
-var addUsername = function(name, rtm, channel) {
-  checkDB()
+var addUsername = function(name, rtm, data) {
+  channel = data['channel'];
   var options = {
     url: "https://api.github.com/users/" + name,
     headers: {
@@ -109,6 +105,7 @@ var addUsername = function(name, rtm, channel) {
       var info = JSON.parse(body);
       console.log(info);
       rtm.sendMessage('Got it! Adding ' + name + '...', channel);
+      insertUser(data['user'], name);
     } else {
       rtm.sendMessage('Sorry, I had trouble finding ' + name + '...', channel);
     }
@@ -137,6 +134,25 @@ function createTable() {
 function closeDb(){
   console.log("closing database");
   db.close();
+}
+
+function insertUser(username, github_username) {
+  var query = "INSERT INTO users (username, github_username) " +
+              "VALUES ('" + username + "', '" + github_username + "');";
+  console.log(query);
+  console.log(username, github_username);
+  db.run(query);
+  // userExists(username);
+}
+
+function userExists(name) {
+  var query = 'SELECT github_username FROM users WHERE github_username = "' + name + '";';
+  console.log(query);
+  db.all(query, function(err, rows) {
+      console.log(rows.length > 0);
+      console.log(rows);
+      return (rows.length > 0);
+  });
 }
 
 /* Run process */
