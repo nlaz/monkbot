@@ -18,6 +18,7 @@ var RTM_EVENTS    = require('@slack/client').RTM_EVENTS;
 var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 
 var convos = {};
+var db;
 
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
 var token = process.env.SLACK_API_TOKEN || '';
@@ -28,22 +29,16 @@ var usage = "*CarpeBot* - Your courteous Slack reminder to commit daily\n" +
 
 var rtm = new RtmClient(token, {logLevel: DEBUG_LEVEL});
 var web = new WebClient(token);
-var db = new sqlite3.Database('test.db');
 
 /* Event Handlers */
 
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
   console.log('Connection opened');
-  var query = "CREATE TABLE IF NOT EXISTS users(" +
-              "id integer PRIMARY KEY, " +
-              "username TEXT, " +
-              "github_username TEXT);"
-
-  db.run(query); // Create DB Table
 });
 
 rtm.on(CLIENT_EVENTS.RTM.DISCONNECT, function () {
-  db.close(); // Close DB
+  console.log('Connection closed');
+  closeDb();
 });
 
 rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
@@ -73,7 +68,9 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   } else if (data['channel'] in convos) {
     // Opened conversation
     console.log('IS YOUR NAME REALLY ' + data['text'] + '?');
-    addUsername(data['text'], rtm, data['channel']);
+    if (userExists(name)) {
+      addUsername(data['text'], rtm, data['channel']);
+    }
   }
 });
 
@@ -93,7 +90,13 @@ var fetchGitHub = function(user, rtm, channel) {
   });
 }
 
+var userExists = function(name) {
+  var q = "SELECT EXISTS(SELECT * FROM users WHERE github_username='" + name "');"
+  db.run(q);
+}
+
 var addUsername = function(name, rtm, channel) {
+  checkDB()
   var options = {
     url: "https://api.github.com/users/" + name,
     headers: {
@@ -114,4 +117,29 @@ var addUsername = function(name, rtm, channel) {
   request(options, callback);
 }
 
+/* Database Methods */
+
+
+function createDb() {
+    console.log("create database");
+    db = new sqlite3.Database('test.db', createTable);
+}
+
+function createTable() {
+    console.log("create table");
+    var query = "CREATE TABLE IF NOT EXISTS users(" +
+              "id integer PRIMARY KEY, " +
+              "username TEXT, " +
+              "github_username TEXT);"
+    db.run(query);
+}
+
+function closeDb(){
+  console.log("closing database");
+  db.close();
+}
+
+/* Run process */
+
+createDb();
 rtm.start();
