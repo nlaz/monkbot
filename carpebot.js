@@ -25,6 +25,7 @@ var token = process.env.SLACK_API_TOKEN || '';
 
 var usage = "*CarpeBot* - Your courteous Slack reminder to commit daily\n" +
             "`@carpebot help` - Displays list of commands carpebot recognizes.\n" +
+            "`@carpebot users` - Displays list of all users.\n" +
             "`@carpebot add me` - Add your name to carpebot's list of committers.";
 
 var rtm = new RtmClient(token, {logLevel: DEBUG_LEVEL});
@@ -61,6 +62,11 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         console.log("'add me' command recognized");
         console.log(data);
         fetchGitHub(data['user'], rtm, data['channel']);
+        break;
+      case 'users':
+        fetchUsers( function(message){
+          rtm.sendMessage(message, data['channel']);
+        });
         break;
       default:
         rtm.sendMessage('Oops! Unable to recognize command. Please try something like:\n' + usage, data['channel']);
@@ -109,12 +115,10 @@ var addUsername = function(name, rtm, data) {
       rtm.sendMessage('Sorry, I had trouble finding ' + name + '...', channel);
     }
   }
-
   request(options, callback);
 }
 
 /* Database Methods */
-
 
 function createDb() {
   console.log("create database");
@@ -147,19 +151,29 @@ function insertUser(username, github_username) {
   console.log(query);
   console.log(username, github_username);
   db.run(query);
-  // userExists(username);
 }
 
 function checkUserExists(name, addUser) {
   var query = 'SELECT github_username FROM users WHERE github_username = "' + name + '";';
   console.log(query);
   db.all(query, function(err, rows) {
-      console.log(rows.length > 0);
-      console.log(rows);
-      if (rows.length == 0) {
-        console.log("Adding new user");
-        addUser()
-      }
+    if (rows.length == 0) {
+      console.log("Adding new user");
+      addUser()
+    }
+  });
+}
+
+function fetchUsers(sendMsg) {
+  var msg = "Here's the list of users I'm tracking...\n";
+  var query = "SELECT github_username FROM users;";
+  var list = [];
+  db.all(query, function(err, rows) {
+    console.log(rows);
+    rows.forEach(function (row) {
+      list.push(row['github_username']);
+    });
+    sendMsg(msg + list.join(', '));
   });
 }
 
