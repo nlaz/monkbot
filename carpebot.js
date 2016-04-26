@@ -10,7 +10,9 @@
  */
 
 require('./env.js');
+var jsdom         = require("jsdom");
 var request       = require("request");
+var dateFormat    = require('dateformat');
 var sqlite3       = require('sqlite3').verbose();
 var RtmClient     = require('@slack/client').RtmClient;
 var WebClient     = require('@slack/client').WebClient;
@@ -73,8 +75,12 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
       case 'report':
         fetchUsers( function(users) {
           console.log("list: " + users);
-          users.forEach( function(user) {
-            findDailyCommit(user);
+          findDailyCommits(users, function(commits) {
+            var msg = "Here's who committed today! :hand:\n";
+            commits.forEach( function(c) {
+              msg += c.name + " committed " + c.count + " today!\n";
+            });
+            rtm.sendMessage(msg, data['channel']);
           });
         });
         break;
@@ -100,21 +106,38 @@ var fetchGitHub = function(user, rtm, channel) {
       console.log('IM Info:', info);
       var convo = info['channel']['id'];
       convos[convo] = user;
-      rtm.sendMessage('Cool! I messaged you for your username.', channel);
+      rtm.sendMessage('Cool! I will message you for your username.', channel);
       rtm.sendMessage('Hi! What is your GitHub username?', convo);
     }
   });
 }
 
-var findDailyCommit = function(name) {
-  var url = "https://github.com/" + name;
-  console.log("finding: " + name);
-  function callback(error, response, body) {
-    if (!error && response.statusCode == 200) {
-      console.log(response);
-    }
-  }
-  request(url, callback);
+var findDailyCommits = function(users, callback) {
+  var commits = [];
+  var namesProcessed = 0;
+  users.forEach( function(name, index, array) {
+    var url = "https://github.com/" + name;
+    var now = new Date();
+    var selector = "g rect[data-date='" + dateFormat(now, "isoDate") + "']";
+    console.log(selector);
+    console.log("finding: " + name);
+
+    jsdom.env(
+      url,
+      ["http://code.jquery.com/jquery.js"],
+      function (err, window) {
+        var count = window.$(selector).attr("data-count");
+        commits.push({name: name, count: count});
+        namesProcessed++;
+        if (namesProcessed == array.length){
+          commits.sort(function(a,b) {
+            return a.count - b.count;
+          });
+          callback(commits);
+        }
+      }
+    );
+  });
 }
 
 var addUsername = function(name, rtm, data) {
