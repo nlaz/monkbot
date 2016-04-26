@@ -65,11 +65,18 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         fetchGitHub(data['user'], rtm, data['channel']);
         break;
       case 'users':
-        fetchUsers( function(message){
-          rtm.sendMessage(message, data['channel']);
+        fetchUsers( function(users) {
+          var msg = "Here's the list of users I'm tracking...\n";
+          rtm.sendMessage(msg + users.join(', '), data['channel']);
         });
         break;
       case 'report':
+        fetchUsers( function(users) {
+          console.log("list: " + users);
+          users.forEach( function(user) {
+            findDailyCommit(user);
+          });
+        });
         break;
       default:
         rtm.sendMessage('Oops! Unable to recognize command. Please try something like:\n' + usage, data['channel']);
@@ -77,8 +84,6 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   } else if (data['channel'] in convos) {
     // Opened conversation
     name = data['text'];
-    console.log('IS YOUR NAME REALLY ' + name + '?');
-
     checkUserExists(name, function(){
       addUsername(name, rtm, data);
     });
@@ -99,6 +104,17 @@ var fetchGitHub = function(user, rtm, channel) {
       rtm.sendMessage('Hi! What is your GitHub username?', convo);
     }
   });
+}
+
+var findDailyCommit = function(name) {
+  var url = "https://github.com/" + name;
+  console.log("finding: " + name);
+  function callback(error, response, body) {
+    if (!error && response.statusCode == 200) {
+      console.log(response);
+    }
+  }
+  request(url, callback);
 }
 
 var addUsername = function(name, rtm, data) {
@@ -156,19 +172,17 @@ function insertUser(username, github_username) {
   db.run(query);
 }
 
-function checkUserExists(name, addUser) {
+function checkUserExists(name, callback) {
   var query = 'SELECT github_username FROM users WHERE github_username = "' + name + '";';
   console.log(query);
   db.all(query, function(err, rows) {
     if (rows.length == 0) {
-      console.log("Adding new user");
-      addUser()
+      callback()
     }
   });
 }
 
-function fetchUsers(sendMsg) {
-  var msg = "Here's the list of users I'm tracking...\n";
+function fetchUsers(callback) {
   var query = "SELECT github_username FROM users;";
   var list = [];
   db.all(query, function(err, rows) {
@@ -176,7 +190,7 @@ function fetchUsers(sendMsg) {
     rows.forEach(function (row) {
       list.push(row['github_username']);
     });
-    sendMsg(msg + list.join(', '));
+    callback(list);
   });
 }
 
