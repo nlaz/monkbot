@@ -25,11 +25,11 @@ var db;
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
 var token = process.env.SLACK_API_TOKEN || '';
 
-var usage = "*CarpeBot* - Your courteous Slack reminder to commit daily\n" +
-            "`@carpebot help` - Displays list of commands carpebot recognizes.\n" +
-            "`@carpebot users` - Displays list of all users.\n" +
-            "`@carpebot report` - Report daily commiters.\n" +
-            "`@carpebot add me` - Add your name to carpebot's list of committers.";
+var usage = "*MonkBot* - Your courteous Slack reminder to commit daily\n" +
+            "`@monkbot help` - Displays list of commands monkbot recognizes.\n" +
+            "`@monkbot users` - Displays list of all users.\n" +
+            "`@monkbot report` - Report daily commiters.\n" +
+            "`@monkbot add me` - Add your name to monkbot's list of committers.";
 
 var rtm = new RtmClient(token, {logLevel: DEBUG_LEVEL});
 var web = new WebClient(token);
@@ -144,7 +144,7 @@ var addUsername = function(name, rtm, data) {
   channel = data['channel'];
   var options = {
     url: "https://api.github.com/users/" + name,
-    headers: { 'User-Agent': 'carpebot' }
+    headers: { 'User-Agent': 'monkbot' }
   };
 
   function callback(error, response, body) {

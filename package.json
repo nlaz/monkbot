@@ -1,8 +1,8 @@
 {
-  "name": "carpebot",
+  "name": "monkbot",
   "version": "1.0.0",
   "description": "A slack bot for daily committers",
-  "main": "carpebot.js",
+  "main": "monkbot.js",
   "directories": {
     "example": "examples",
     "test": "test"
@@ -11,7 +11,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nlaz/carpebot"
+    "url": "https://github.com/nlaz/monkbot"
   },
   "dependencies": {
     "@slack/client": "^2.3.0",
