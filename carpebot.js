@@ -69,9 +69,10 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
     // Opened conversation
     name = data['text'];
     console.log('IS YOUR NAME REALLY ' + name + '?');
-    if (!userExists(name)) {
+
+    checkUserExists(name, function(){
       addUsername(name, rtm, data);
-    }
+    });
   }
 });
 
@@ -95,9 +96,7 @@ var addUsername = function(name, rtm, data) {
   channel = data['channel'];
   var options = {
     url: "https://api.github.com/users/" + name,
-    headers: {
-      'User-Agent': 'carpebot'
-    }
+    headers: { 'User-Agent': 'carpebot' }
   };
 
   function callback(error, response, body) {
@@ -118,17 +117,23 @@ var addUsername = function(name, rtm, data) {
 
 
 function createDb() {
-    console.log("create database");
-    db = new sqlite3.Database('test.db', createTable);
+  console.log("create database");
+  db = new sqlite3.Database('test.db', createTable);
+}
+
+function dropTable() {
+  console.log("dropping table");
+  var query = "DROP TABLE users;"
+  db.run(query);
 }
 
 function createTable() {
-    console.log("create table");
-    var query = "CREATE TABLE IF NOT EXISTS users(" +
-              "id integer PRIMARY KEY, " +
-              "username TEXT, " +
-              "github_username TEXT);"
-    db.run(query);
+  console.log("create table");
+  var query = "CREATE TABLE IF NOT EXISTS users(" +
+            "id integer PRIMARY KEY, " +
+            "username TEXT, " +
+            "github_username TEXT);"
+  db.run(query);
 }
 
 function closeDb(){
@@ -145,13 +150,16 @@ function insertUser(username, github_username) {
   // userExists(username);
 }
 
-function userExists(name) {
+function checkUserExists(name, addUser) {
   var query = 'SELECT github_username FROM users WHERE github_username = "' + name + '";';
   console.log(query);
   db.all(query, function(err, rows) {
       console.log(rows.length > 0);
       console.log(rows);
-      return (rows.length > 0);
+      if (rows.length == 0) {
+        console.log("Adding new user");
+        addUser()
+      }
   });
 }
 
