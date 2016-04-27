@@ -34,16 +34,20 @@ var web = new WebClient(token);
 
 /* Event Handlers */
 
+// Connection Opened
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
   console.log('Connection opened');
 });
 
+// Connection Closed
 rtm.on(CLIENT_EVENTS.RTM.DISCONNECT, function () {
   console.log('Connection closed');
   closeDb();
 });
 
+// Message Event Handler
 rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
+  // Parse string and check commands
   var command = data['text'];
   var client_id = '<@' + rtm.activeUserId + '>';
 
@@ -85,6 +89,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
 
 /* Helpers */
 
+// Create message showing who has committed
 var createReport = function(commits, rtm, channel) {
   var msg = "",
       committed = [], 
@@ -109,6 +114,7 @@ var createReport = function(commits, rtm, channel) {
   rtm.sendMessage(msg, channel);
 }
 
+// Ask for Github username
 var fetchGitHub = function(user, rtm, channel) {
   web.im.open(user, function imOpenCb(err, info) {
     if (err) {
@@ -122,6 +128,7 @@ var fetchGitHub = function(user, rtm, channel) {
   });
 }
 
+// Find number of commits today for each user
 var findDailyCommits = function(users, callback) {
   var commits = [];
   var namesProcessed = 0;
@@ -144,6 +151,7 @@ var findDailyCommits = function(users, callback) {
   });
 }
 
+// Check username is a GitHub name
 var addUsername = function(name, rtm, data) {
   channel = data['channel'];
   var options = {
