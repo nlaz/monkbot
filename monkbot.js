@@ -76,11 +76,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         fetchUsers( function(users) {
           console.log("list: " + users);
           findDailyCommits(users, function(commits) {
-            var msg = "Here's who committed today! :hand:\n";
-            commits.forEach( function(c) {
-              msg += c.name + " committed " + c.count + " today!\n";
-            });
-            rtm.sendMessage(msg, data['channel']);
+            createReport(commits, rtm, data['channel']);
           });
         });
         break;
@@ -97,6 +93,30 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
 });
 
 /* Helpers */
+
+var createReport = function(commits, rtm, channel) {
+  var msg = "",
+      committed = [], 
+      uncommitted = [];
+
+  commits.sort(function(a,b) {
+    return b.count - a.count;
+  });
+
+  commits.forEach( function(c) {
+    (c.count > 0) ? committed.push(c) : uncommitted.push(c.name);
+  });
+
+  msg += "*Here's who committed today! :hand:*\n";
+  committed.forEach( function(c) {
+    msg += " - " +  c.name + " committed " + c.count + " times today!\n";
+  });
+
+  msg += "\n*Here's who hasn't committed yet today :sweat:*\n";
+  msg += '_' + uncommitted.join(', ') + '_';
+
+  rtm.sendMessage(msg, channel);
+}
 
 var fetchGitHub = function(user, rtm, channel) {
   web.im.open(user, function imOpenCb(err, info) {
@@ -127,12 +147,10 @@ var findDailyCommits = function(users, callback) {
       ["http://code.jquery.com/jquery.js"],
       function (err, window) {
         var count = window.$(selector).attr("data-count");
+        console.log(name + ": " + count);
         commits.push({name: name, count: count});
         namesProcessed++;
         if (namesProcessed == array.length){
-          commits.sort(function(a,b) {
-            return a.count - b.count;
-          });
           callback(commits);
         }
       }
