@@ -46,22 +46,16 @@ rtm.on(CLIENT_EVENTS.RTM.DISCONNECT, function () {
 rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   var command = data['text'];
   var client_id = '<@' + rtm.activeUserId + '>';
-  console.log(data['channel']);
-  console.log(convos);
 
   if (command.substring(0, client_id.length) == client_id) {
     // Bot has been summoned
     command = command.substring(client_id.length + 1).trim();
-    console.log(command);
 
     switch (command) {
       case 'help':
-        console.log("'help' command recognized");
         rtm.sendMessage(usage, data['channel']);
         break;
       case 'add me':
-        console.log("'add me' command recognized");
-        console.log(data);
         fetchGitHub(data['user'], rtm, data['channel']);
         break;
       case 'users':
@@ -72,7 +66,6 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         break;
       case 'report':
         fetchUsers( function(users) {
-          console.log("list: " + users);
           findDailyCommits(users, function(commits) {
             createReport(commits, rtm, data['channel']);
           });
@@ -119,9 +112,8 @@ var createReport = function(commits, rtm, channel) {
 var fetchGitHub = function(user, rtm, channel) {
   web.im.open(user, function imOpenCb(err, info) {
     if (err) {
-      console.log('Error:', err);
+      console.log('IM ERROR:', err);
     } else {
-      console.log('IM Info:', info);
       var convo = info['channel']['id'];
       convos[convo] = user;
       rtm.sendMessage('Cool! I will message you for your username.', channel);
@@ -135,17 +127,13 @@ var findDailyCommits = function(users, callback) {
   var namesProcessed = 0;
   users.forEach( function(name, index, array) {
     var url = "https://github.com/" + name;
-    var now = new Date();
-    var selector = "g rect[data-date='" + dateFormat(now, "isoDate") + "']";
-    console.log(selector);
-    console.log("finding: " + name);
+    var selector = "g rect[data-date='" + dateFormat(new Date(), "isoDate") + "']";
 
     jsdom.env(
       url,
       ["http://code.jquery.com/jquery.js"],
       function (err, window) {
         var count = window.$(selector).attr("data-count");
-        console.log(name + ": " + count);
         commits.push({name: name, count: count});
         namesProcessed++;
         if (namesProcessed == array.length){
@@ -166,7 +154,6 @@ var addUsername = function(name, rtm, data) {
   function callback(error, response, body) {
     if (!error && response.statusCode == 200) {
       var info = JSON.parse(body);
-      console.log(info);
       rtm.sendMessage('Got it! Adding ' + name + '...', channel);
       insertUser(data['user'], name);
     } else {
@@ -206,8 +193,6 @@ function closeDb(){
 function insertUser(username, github_username) {
   var query = "INSERT INTO users (username, github_username) " +
               "VALUES ('" + username + "', '" + github_username + "');";
-  console.log(query);
-  console.log(username, github_username);
   db.run(query);
 }
 
@@ -225,7 +210,6 @@ function fetchUsers(callback) {
   var query = "SELECT github_username FROM users;";
   var list = [];
   db.all(query, function(err, rows) {
-    console.log(rows);
     rows.forEach(function (row) {
       list.push(row['github_username']);
     });
