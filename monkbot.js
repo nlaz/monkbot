@@ -7,7 +7,6 @@
  *  Your Slack servant for daily committing
  */
 
-require('./env.js');
 var jsdom         = require("jsdom");
 var request       = require("request");
 var dateFormat    = require('dateformat');
@@ -21,6 +20,11 @@ var convos = {};
 var db;
 
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
+
+if(!process.env.SLACK_API_TOKEN) {
+  var env = require('./env.js')
+}
+
 var token = process.env.SLACK_API_TOKEN || '';
 
 var usage = "*MonkBot* - Your courteous Slack reminder to commit daily\n" +
