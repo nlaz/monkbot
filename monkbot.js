@@ -31,7 +31,8 @@ var usage = "*MonkBot* - Your courteous Slack reminder to commit daily\n" +
             "`@monkbot help` - Displays list of commands monkbot recognizes.\n" +
             "`@monkbot users` - Displays list of all users.\n" +
             "`@monkbot report` - Report daily commiters.\n" +
-            "`@monkbot add me` - Add your name to monkbot's list of committers.";
+            "`@monkbot add me` - Add your name to monkbot's list of committers.\n" +
+            "`@monkbot remove me` - Remove your name from monkbot's list of committers.";
 
 var rtm = new RtmClient(token, {logLevel: DEBUG_LEVEL});
 var web = new WebClient(token);
@@ -65,6 +66,10 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         break;
       case 'add me':
         fetchGitHub(data['user'], rtm, data['channel']);
+        break;
+      case 'remove me':
+        removeUser(data['user']);
+        rtm.sendMessage("Sad to see ya go!", data['channel']);
         break;
       case 'users':
         fetchUsers( function(users) {
@@ -205,6 +210,12 @@ function closeDb(){
 function insertUser(username, github_username) {
   var query = "INSERT INTO users (username, github_username) " +
               "VALUES ('" + username + "', '" + github_username + "');";
+  db.run(query);
+}
+
+function removeUser(user) {
+  var query = "DELETE FROM users " +
+              "WHERE username='" + user + "';";
   db.run(query);
 }
 
