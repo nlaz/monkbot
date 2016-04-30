@@ -95,12 +95,8 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
 
 /* Cron Job Checking Commits */
 
-new CronJob('* * 18 * * *', function() {
-    fetchUsers( function(users) {
-      findDailyCommits(users, function(users) {
-        console.log(commits);
-      });
-    });
+new CronJob('00 00 20 * * *', function() {
+    remindUsers();
   }, null, true, 'US/Central'
 );
 
@@ -135,9 +131,9 @@ var remindUsers = function() {
             console.log('IM ERROR:', err);
           } else {
             if (count > 0) {
-              rtm.sendMessage("You committed today!", info['channel']['id']);
+              rtm.sendMessage("Highfive! :hand: You kept your streak alive!", info['channel']['id']);
             } else {
-              rtm.sendMessage("You haven't committed today!", info['channel']['id']);
+              rtm.sendMessage("You haven't committed today! You have 4 hours left. :grimacing:" , info['channel']['id']);
             }
           }
         });
@@ -280,7 +276,6 @@ function fetchUsers(callback) {
   var query = "SELECT * FROM users;";
   db.all(query, function(err, rows) {
     if (!err && rows){
-      console.log(rows);
       callback(rows);
     }
   });
