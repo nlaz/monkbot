@@ -108,10 +108,6 @@ new CronJob('* * 18 * * *', function() {
 
 var showReport = function(channel) {
   fetchUsers( function(rows) {
-    var usernames = [];
-    rows.forEach(function(row){
-      usernames.push(row['github_username']);
-    });
     findDailyCommits(rows, function(info) {
       createReport(info, rtm, channel);
     });
@@ -131,13 +127,21 @@ var showUsers = function(channel) {
 
 var remindUsers = function() {
   fetchUsers( function(rows) {
-    var usernames = [];
-    rows.forEach(function(row){
-      usernames.push(row['github_username']);
-    });
-    findDailyCommits(usernames, function(commits) {
-      console.log(rows);
-      console.log(commits);
+    findDailyCommits(rows, function(users) {
+      users.forEach(function(user){
+        var count = user['commit_count'];
+        web.im.open(user['username'], function imOpenCb(err, info) {
+          if (err) {
+            console.log('IM ERROR:', err);
+          } else {
+            if (count > 0) {
+              rtm.sendMessage("You committed today!", info['channel']['id']);
+            } else {
+              rtm.sendMessage("You haven't committed today!", info['channel']['id']);
+            }
+          }
+        });
+      });
     });
   });
 }
