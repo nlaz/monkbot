@@ -10,6 +10,7 @@
 var jsdom         = require("jsdom");
 var request       = require("request");
 var dateFormat    = require('dateformat');
+var CronJob       = require('cron').CronJob;
 var sqlite3       = require('sqlite3').verbose();
 var RtmClient     = require('@slack/client').RtmClient;
 var WebClient     = require('@slack/client').WebClient;
@@ -72,17 +73,13 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
         rtm.sendMessage("Sad to see ya go!", data['channel']);
         break;
       case 'users':
-        fetchUsers( function(users) {
-          var msg = "Here's the list of users I'm tracking...\n";
-          rtm.sendMessage(msg + users.join(', '), data['channel']);
-        });
+        showUsers(data['channel']);
+        break;
+      case 'remind':
+        remindUsers();
         break;
       case 'report':
-        fetchUsers( function(users) {
-          findDailyCommits(users, function(commits) {
-            createReport(commits, rtm, data['channel']);
-          });
-        });
+        showReport(data['channel']);
         break;
       default:
         rtm.sendMessage('Oops! Unable to recognize command. Please try something like:\n' + usage, data['channel']);
@@ -96,7 +93,49 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
   }
 });
 
+/* Cron Job Checking Commits */
+
+new CronJob('* * 18 * * *', function() {
+    fetchUsers( function(users) {
+      findDailyCommits(users, function(commits) {
+        console.log(commits);
+      });
+    });
+  }, null, true, 'US/Central'
+);
+
 /* Helpers */
+
+var showReport = function(channel) {
+  fetchUsers( function(rows) {
+    var usernames = [];
+    rows.forEach(function(row){
+      usernames.push(row['github_username']);
+    });
+    findDailyCommits(usernames, function(commits) {
+      createReport(commits, rtm, channel);
+    });
+  });
+}
+
+var showUsers = function(channel) {
+  fetchUsers( function(rows) {
+    var msg = "Here's the list of users I'm tracking...\n";
+    var usernames = [];
+    rows.forEach( function (row) {
+      usernames.push(row['github_username']);
+    });
+    rtm.sendMessage(msg + usernames.join(', '), channel);
+  });
+}
+
+var remindUsers = function() {
+  fetchUsers( function(users) {
+    findDailyCommits(users, function(commits) {
+      console.log(users + commits);
+    });
+  });
+}
 
 // Create message showing who has committed
 var createReport = function(commits, rtm, channel) {
@@ -221,7 +260,6 @@ function removeUser(user) {
 
 function checkUserExists(name, callback) {
   var query = 'SELECT github_username FROM users WHERE github_username = "' + name + '";';
-  console.log(query);
   db.all(query, function(err, rows) {
     if (rows.length == 0) {
       callback()
@@ -230,13 +268,12 @@ function checkUserExists(name, callback) {
 }
 
 function fetchUsers(callback) {
-  var query = "SELECT github_username FROM users;";
-  var list = [];
+  var query = "SELECT * FROM users;";
   db.all(query, function(err, rows) {
-    rows.forEach(function (row) {
-      list.push(row['github_username']);
-    });
-    callback(list);
+    if (!err && rows){
+      console.log(rows);
+      callback(rows);
+    }
   });
 }
 
