@@ -97,7 +97,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
 
 new CronJob('* * 18 * * *', function() {
     fetchUsers( function(users) {
-      findDailyCommits(users, function(commits) {
+      findDailyCommits(users, function(users) {
         console.log(commits);
       });
     });
@@ -112,8 +112,8 @@ var showReport = function(channel) {
     rows.forEach(function(row){
       usernames.push(row['github_username']);
     });
-    findDailyCommits(usernames, function(commits) {
-      createReport(commits, rtm, channel);
+    findDailyCommits(rows, function(info) {
+      createReport(info, rtm, channel);
     });
   });
 }
@@ -130,9 +130,14 @@ var showUsers = function(channel) {
 }
 
 var remindUsers = function() {
-  fetchUsers( function(users) {
-    findDailyCommits(users, function(commits) {
-      console.log(users + commits);
+  fetchUsers( function(rows) {
+    var usernames = [];
+    rows.forEach(function(row){
+      usernames.push(row['github_username']);
+    });
+    findDailyCommits(usernames, function(commits) {
+      console.log(rows);
+      console.log(commits);
     });
   });
 }
@@ -144,16 +149,16 @@ var createReport = function(commits, rtm, channel) {
       uncommitted = [];
 
   commits.sort(function(a,b) {
-    return b.count - a.count;
+    return b.commit_count - a.commit_count;
   });
 
   commits.forEach( function(c) {
-    (c.count > 0) ? committed.push(c) : uncommitted.push(c.name);
+    (c.commit_count > 0) ? committed.push(c) : uncommitted.push(c.github_username);
   });
 
   msg += "*Here's who committed today! :hand:*\n";
   committed.forEach( function(c) {
-    msg += " - " +  c.name + " committed " + c.count + " times today!\n";
+    msg += " - " +  c.github_username + " committed " + c.commit_count + " times today!\n";
   });
 
   msg += "\n*Here's who hasn't committed yet today :sweat:*\n";
@@ -178,9 +183,9 @@ var fetchGitHub = function(user, rtm, channel) {
 
 // Find number of commits today for each user
 var findDailyCommits = function(users, callback) {
-  var commits = [];
   var namesProcessed = 0;
-  users.forEach( function(name, index, array) {
+  users.forEach( function(user, index, array) {
+    var name = user['github_username'];
     var url = "https://github.com/" + name;
     var selector = "g rect[data-date='" + dateFormat(new Date(), "isoDate") + "']";
 
@@ -189,10 +194,10 @@ var findDailyCommits = function(users, callback) {
       ["http://code.jquery.com/jquery.js"],
       function (err, window) {
         var count = window.$(selector).attr("data-count");
-        commits.push({name: name, count: count});
+        user['commit_count'] = count;
         namesProcessed++;
         if (namesProcessed == array.length){
-          callback(commits);
+          callback(users);
         }
       }
     );
