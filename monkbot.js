@@ -131,7 +131,7 @@ var remindUsers = function() {
             console.log('IM ERROR:', err);
           } else {
             if (count > 0) {
-              rtm.sendMessage("Highfive! :hand: You kept your streak alive!", info['channel']['id']);
+              rtm.sendMessage("Highfive! :hand: You kept your streak alive today!", info['channel']['id']);
             } else {
               rtm.sendMessage("You haven't committed today! You have 4 hours left. :grimacing:" , info['channel']['id']);
             }
