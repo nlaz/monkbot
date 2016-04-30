@@ -75,9 +75,6 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
       case 'users':
         showUsers(data['channel']);
         break;
-      case 'remind':
-        remindUsers();
-        break;
       case 'report':
         showReport(data['channel']);
         break;
