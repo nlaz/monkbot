@@ -13,7 +13,7 @@ results
 build
 
 node_modules
-env.js
+.env
 *.db
 # Elastic Beanstalk Files
 .elasticbeanstalk/*

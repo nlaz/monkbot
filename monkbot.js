@@ -6,6 +6,8 @@
  *
  *  Your Slack servant for daily committing
  */
+ 
+require('dotenv').config();
 
 var jsdom         = require("jsdom");
 var request       = require("request");
@@ -21,10 +23,6 @@ var convos = {};
 var db;
 
 var DEBUG_LEVEL = 'info'; // 'debug', 'info', 'verbose'
-
-if(!process.env.SLACK_API_TOKEN) {
-  var env = require('./env.js')
-}
 
 var token = process.env.SLACK_API_TOKEN || '';
 
