@@ -90,7 +90,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(data) {
 
 /* Cron Job Checking Commits */
 
-new CronJob('00 00 20 * * *', function() {
+new CronJob('00 00 18 * * *', function() {
     remindUsers();
   }, null, true, 'US/Central'
 );
