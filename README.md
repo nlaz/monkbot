@@ -4,6 +4,8 @@ A Slackbot to keep you committing to open source projects.
 ## How it works
 Give your GitHub username to Monkbot and it will track your commit progress and it will remind you on Slack if you haven't committed for the day. The aim is to help you commit daily.
 
+Add it to your Slack community. Users will add themselves to a list of users to be reminded daily to commit by MonkBot. Get started with the '@monkbot help' command.
+
 ## Setup
 
 These are the steps to get the app up and running:
